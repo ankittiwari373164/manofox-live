@@ -51,46 +51,45 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- 5. 7-HOUR AUTO-SEO ROBOT (TARGETED DIGITAL MARKETING MODE) ---
+// --- 5. 7-HOUR AUTO-SEO ROBOT (HYBRID: AGENCY + NEWS) ---
 async function updateKeywords() {
-    // Backup is only used if Google goes completely offline
-    const backupKeywords = "Digital Marketing, SEO Services, Web Development, PPC Agency, Social Media Marketing, Content Strategy, Delhi Agency, Online Growth";
+    // 1. "Money Keywords" (These stay PERMANENTLY for your Agency business)
+    const fixedKeywords = "Digital Marketing Agency, Best SEO Company, PPC Services, Social Media Management, Web Design Agency, Online Marketing India, Lead Generation Services";
 
+    // Helper to clean up news titles
     const extractTitles = (xmlText) => {
         const matches = xmlText.match(/<title>(.*?)<\/title>/g);
         if (!matches || matches.length <= 1) return [];
-        return matches.slice(1, 15).map(item => item.replace(/<\/?title>/g, '').replace(' - Google News', ''));
+        // Get top 10 news items and clean them
+        return matches.slice(1, 10).map(item => item.replace(/<\/?title>/g, '').replace(' - Google News', ''));
     };
 
     try {
-        console.log("🤖 Robot: Fetching 'Digital Marketing' specific news...");
+        console.log("🤖 Robot: Fetching latest Marketing News...");
 
-        // WE CHANGED THIS URL:
-        // Instead of "Top Stories", we now search specifically for "Digital Marketing OR SEO OR AI"
-        // This forces Google to give us only relevant industry news.
-        const topicUrl = 'https://news.google.com/rss/search?q=Digital+Marketing+OR+SEO+OR+Artificial+Intelligence+Marketing&hl=en-IN&gl=IN&ceid=IN:en';
-        
-        // Use the proxy to bypass blocks
+        // 2. Fetch "Digital Marketing" News via Proxy
+        const topicUrl = 'https://news.google.com/rss/search?q=Digital+Marketing+Trends+OR+SEO+Updates&hl=en-IN&gl=IN&ceid=IN:en';
         const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(topicUrl);
         
         const response = await fetch(proxyUrl);
         const text = await response.text();
         
-        const keywords = extractTitles(text);
+        const newsKeywords = extractTitles(text);
 
-        if (keywords.length === 0) throw new Error("No relevant keywords found");
+        if (newsKeywords.length === 0) throw new Error("No news found");
 
-        const finalKeys = keywords.join(', ');
+        // 3. COMBINE THEM (The Magic Step)
+        // Result: "Digital Marketing Agency, PPC Services ... + [Live News Headline 1], [Live News Headline 2]"
+        const finalKeys = fixedKeywords + ", " + newsKeywords.join(', ');
 
         // Save to Database
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: finalKeys }, { upsert: true });
-        console.log("✅ SUCCESS: Updated with TARGETED Marketing Data");
-        console.log("Live Keywords:", finalKeys);
+        console.log("✅ SUCCESS: Merged Fixed Agency Keys + Live News");
 
     } catch (e) {
-        console.log("❌ ERROR:", e.message);
-        console.log("⚠️ Using Backup Static Keywords");
-        await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: backupKeywords }, { upsert: true });
+        console.log("⚠️ Robot Error:", e.message);
+        // If news fails, at least save the fixed agency keywords
+        await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: fixedKeywords }, { upsert: true });
     }
 }
 
@@ -185,6 +184,7 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+
 
 
 

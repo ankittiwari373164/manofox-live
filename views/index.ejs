@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title><%= seo.title || 'Manofox | Full-Service Digital Marketing Agency' %></title>
+    <meta name="description" content="<%= seo.desc || 'Manofox offers expert SEO, Web Development, Social Media, and PPC services in Delhi.' %>">
+    <meta name="keywords" content="<%= seo.keywords || 'digital marketing, seo, web design, app development, smm' %>">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        /* --- VARIABLES --- */
+        :root {
+            --primary: #FF5722;   /* Manofox Orange */
+            --dark: #1e1e1e;      /* Soft Black */
+            --gray: #555555;      /* Text Gray */
+            --light: #F8F9FA;     /* Light BG */
+            --white: #FFFFFF;
+            --border: #eeeeee;
+        }
+
+        /* --- BASE --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            line-height: 1.7; 
+            color: var(--dark); 
+            background-color: var(--white);
+            overflow-x: hidden;
+        }
+        a { text-decoration: none; color: inherit; transition: 0.3s; }
+        img { max-width: 100%; display: block; }
+        h1, h2, h3, h4 { line-height: 1.3; font-weight: 700; }
+
+        /* --- NAVBAR --- */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+            position: fixed; width: 100%; top: 0; z-index: 1000;
+        }
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            max-width: 1200px; margin: 0 auto; padding: 15px 20px;
+        }
+        .logo { font-size: 1.6rem; color: var(--dark); letter-spacing: -0.5px; }
+        .logo span { color: var(--primary); }
+        
+        .nav-links { display: flex; gap: 35px; }
+        .nav-links a { font-weight: 500; font-size: 0.95rem; color: var(--dark); position: relative; }
+        .nav-links a:hover { color: var(--primary); }
+
+        .btn {
+            padding: 12px 30px; background: var(--primary); color: white;
+            border-radius: 6px; font-weight: 600; font-size: 0.9rem; border: none;
+            box-shadow: 0 5px 15px rgba(255, 87, 34, 0.2); transition: 0.3s; cursor: pointer;
+        }
+        .btn:hover { background: #e64a19; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(255, 87, 34, 0.3); }
+
+        .hamburger { display: none; cursor: pointer; font-size: 1.5rem; }
+
+        /* --- HERO --- */
+        .hero {
+            height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #FFF5F2 0%, #FFFFFF 100%);
+            text-align: center; padding: 0 20px;
+            padding-top: 80px;
+        }
+        .hero-content { max-width: 900px; }
+        .badge {
+            display: inline-block; background: #ffe0d6; color: var(--primary);
+            padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 20px; color: var(--dark); }
+        .hero h1 span { color: var(--primary); position: relative; }
+        .hero p { font-size: 1.2rem; color: var(--gray); margin-bottom: 40px; max-width: 700px; margin-left: auto; margin-right: auto; }
+
+        /* --- SECTIONS --- */
+        .section { padding: 100px 20px; }
+        .bg-light { background-color: var(--light); }
+        
+        .section-header { text-align: center; margin-bottom: 60px; }
+        .section-header h2 { font-size: 2.5rem; margin-bottom: 15px; }
+        .section-header span { color: var(--primary); }
+        .section-header p { color: var(--gray); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+
+        /* --- SERVICES GRID (EXPANDED) --- */
+        .services-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px; max-width: 1200px; margin: 0 auto;
+        }
+        .service-card {
+            background: var(--white); padding: 40px 30px; border-radius: 12px;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.03); border: 1px solid var(--border);
+            transition: 0.3s; text-align: left;
+        }
+        .service-card:hover { transform: translateY(-10px); border-color: var(--primary); }
+        .icon-box { 
+            width: 60px; height: 60px; background: #FFF5F2; color: var(--primary);
+            display: flex; align-items: center; justify-content: center; border-radius: 10px;
+            font-size: 1.5rem; margin-bottom: 25px;
+        }
+        .service-card h3 { font-size: 1.4rem; margin-bottom: 15px; }
+        .service-card p { color: var(--gray); font-size: 0.95rem; margin-bottom: 20px; }
+        .learn-more { color: var(--primary); font-weight: 600; font-size: 0.9rem; }
+
+        /* --- PROCESS --- */
+        .process-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px;
+            max-width: 1200px; margin: 0 auto; text-align: center; position: relative;
+        }
+        .process-step { position: relative; z-index: 2; }
+        .step-num {
+            width: 50px; height: 50px; background: var(--primary); color: white;
+            font-weight: 700; border-radius: 50%; display: flex; align-items: center; 
+            justify-content: center; margin: 0 auto 20px; font-size: 1.2rem;
+            box-shadow: 0 0 0 10px #FFF5F2;
+        }
+        /* Line */
+        .process-line {
+            position: absolute; top: 25px; left: 10%; width: 80%; height: 2px;
+            background: #ffe0d6; z-index: 1;
+        }
+
+        /* --- TESTIMONIALS --- */
+        .testimonials-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px; max-width: 1200px; margin: 0 auto;
+        }
+        .testimonial-card {
+            background: var(--white); padding: 40px; border-radius: 12px;
+            border: 1px solid var(--border); position: relative;
+        }
+        .quote-icon { font-size: 2rem; color: #ffe0d6; position: absolute; top: 20px; left: 20px; }
+        .testimonial-text { margin: 20px 0; color: var(--gray); font-style: italic; }
+        .client-info h4 { font-size: 1rem; margin-bottom: 2px; }
+        .client-info span { font-size: 0.85rem; color: var(--primary); }
+
+        /* --- FAQ --- */
+        .faq-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+            max-width: 1000px; margin: 0 auto;
+        }
+        .faq-item { background: var(--white); padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        .faq-item h4 { margin-bottom: 10px; font-size: 1.1rem; color: var(--primary); }
+        .faq-item p { font-size: 0.9rem; color: var(--gray); }
+
+        /* --- STATS --- */
+        .stats { background: var(--dark); color: white; padding: 80px 20px; }
+        .stats-grid { display: flex; justify-content: space-around; max-width: 1100px; margin: 0 auto; flex-wrap: wrap; gap: 40px;}
+        .stat-item { text-align: center; }
+        .stat-num { font-size: 3.5rem; font-weight: 700; color: var(--primary); display: block; margin-bottom: 10px; }
+        .stat-item p { font-size: 1.1rem; opacity: 0.8; }
+
+        /* --- CONTACT --- */
+        .contact-layout {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 50px;
+            max-width: 1100px; margin: 0 auto; align-items: center;
+        }
+        .contact-text h3 { font-size: 2rem; margin-bottom: 20px; }
+        .contact-text p { color: var(--gray); margin-bottom: 30px; }
+        .contact-details div { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; font-weight: 500; }
+        .contact-details i { color: var(--primary); width: 25px; }
+
+        .form-box {
+            background: var(--white); padding: 40px; border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem; }
+        .form-group input, .form-group textarea {
+            width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 6px;
+            font-family: inherit; font-size: 0.95rem; background: #fcfcfc;
+        }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); background: #fff; }
+
+        /* --- FOOTER --- */
+        footer { background: #111; color: #888; padding: 70px 20px 20px; }
+        .footer-content {
+            max-width: 1200px; margin: 0 auto; display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px;
+        }
+        .footer-col h4 { color: white; margin-bottom: 20px; font-size: 1.2rem; }
+        .footer-col ul li { margin-bottom: 10px; }
+        .footer-col ul li a:hover { color: var(--primary); }
+        .copyright { text-align: center; margin-top: 50px; border-top: 1px solid #222; padding-top: 20px; font-size: 0.9rem; }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 900px) {
+            .hero h1 { font-size: 2.5rem; }
+            .process-grid { grid-template-columns: 1fr; gap: 40px; }
+            .process-line { display: none; }
+            .contact-layout { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+            .hamburger { display: block; }
+            .faq-grid { grid-template-columns: 1fr; }
+            .nav-mobile { display: flex; flex-direction: column; position: absolute; top: 70px; left: 0; width: 100%; background: white; padding: 20px; box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <a href="#" class="logo">Mano<span>fox</span>.</a>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#process">Process</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact" class="btn" style="color: white;">Get Quote</a></li>
+            </ul>
+            <div class="hamburger"><i class="fas fa-bars"></i></div>
+        </nav>
+    </header>
+
+    <section id="home" class="hero">
+        <div class="hero-content" data-aos="fade-up" data-aos-duration="1000">
+            <div class="badge">🚀 Top Rated Agency in Delhi</div>
+            <h1>Digital Solutions That <br> <span>Drive Revenue</span></h1>
+            <p>From custom websites to high-converting ad campaigns, Manofox helps you dominate your market.</p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <a href="#contact" class="btn">Start Project</a>
+                <a href="#services" class="btn" style="background: white; color: var(--dark); border: 1px solid #ddd; box-shadow: none;">Our Services</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="services" class="section">
+        <div class="section-header" data-aos="fade-up">
+            <h2>Our <span>Expertise</span></h2>
+            <p>A full suite of digital services to scale your business.</p>
+        </div>
+        <div class="services-grid">
+            <div class="service-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="icon-box"><i class="fas fa-search"></i></div>
+                <h3>SEO Optimization</h3>
+                <p>We rank your website on page #1 of Google using advanced white-hat techniques, keywords, and backlinking.</p>
+                <a href="#contact" class="learn-more">Get Ranked &rarr;</a>
+            </div>
+            <div class="service-card" data-aos="fade-up" data-aos-delay="150">
+                <div class="icon-box"><i class="fas fa-code"></i></div>
+                <h3>Web Development</h3>
+                <p>Custom, lightning-fast websites built with Node.js and React that look great on mobile and convert visitors.</p>
+                <a href="#contact" class="learn-more">Build Site &rarr;</a>
+            </div>
+            <div class="service-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="icon-box"><i class="fas fa-bullhorn"></i></div>
+                <h3>PPC Advertising</h3>
+                <p>Instant leads through Google Ads and Facebook Ads. We manage your budget to lower CPA and increase ROI.</p>
+                <a href="#contact" class="learn-more">Start Ads &rarr;</a>
+            </div>
+            <div class="service-card" data-aos="fade-up" data-aos-delay="250">
+                <div class="icon-box"><i class="fas fa-hashtag"></i></div>
+                <h3>Social Media Marketing</h3>
+                <p>Grow your brand on Instagram, LinkedIn, and Twitter with creative content strategies and community management.</p>
+                <a href="#contact" class="learn-more">Go Viral &rarr;</a>
+            </div>
+            <div class="service-card" data-aos="fade-up" data-aos-delay="300">
+                <div class="icon-box"><i class="fas fa-pen-nib"></i></div>
+                <h3>Content Marketing</h3>
+                <p>High-quality blogs, articles, and copywriting that establish authority and engage your target audience.</p>
+                <a href="#contact" class="learn-more">Read More &rarr;</a>
+            </div>
+            <div class="service-card" data-aos="fade-up" data-aos-delay="350">
+                <div class="icon-box"><i class="fas fa-mobile-alt"></i></div>
+                <h3>App Development</h3>
+                <p>Robust iOS and Android mobile applications designed for seamless user experience and performance.</p>
+                <a href="#contact" class="learn-more">Build App &rarr;</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="process" class="section bg-light">
+        <div class="section-header" data-aos="fade-up">
+            <h2>Our <span>Workflow</span></h2>
+            <p>From concept to completion in 4 simple steps.</p>
+        </div>
+        <div class="process-grid">
+            <div class="process-line"></div>
+            <div class="process-step" data-aos="fade-up" data-aos-delay="100">
+                <div class="step-num">1</div>
+                <h3>Discovery</h3>
+                <p>We analyze your market & goals.</p>
+            </div>
+            <div class="process-step" data-aos="fade-up" data-aos-delay="200">
+                <div class="step-num">2</div>
+                <h3>Strategy</h3>
+                <p>We plan a custom roadmap.</p>
+            </div>
+            <div class="process-step" data-aos="fade-up" data-aos-delay="300">
+                <div class="step-num">3</div>
+                <h3>Execution</h3>
+                <p>We build, design, and launch.</p>
+            </div>
+            <div class="process-step" data-aos="fade-up" data-aos-delay="400">
+                <div class="step-num">4</div>
+                <h3>Growth</h3>
+                <p>We track data and optimize.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="section">
+        <div class="contact-layout">
+            <div class="about-img" data-aos="fade-right">
+                <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=800&q=80" alt="Agency Team" style="border-radius: 12px; box-shadow: 20px 20px 0 var(--light);">
+            </div>
+            <div class="about-text" data-aos="fade-left">
+                <div class="badge" style="background: #eef2ff; color: #4f46e5; margin-bottom: 15px;">Who We Are</div>
+                <h2 style="font-size: 2.5rem; margin-bottom: 20px;">We Are Manofox.</h2>
+                <p style="color: var(--gray); margin-bottom: 20px;">Based in Sangam Vihar, Delhi, Manofox is a full-service digital agency committed to your success. We don't just deliver services; we deliver measurable growth.</p>
+                <div style="display: flex; gap: 40px;">
+                    <div><h3 style="color: var(--primary); font-size: 2rem;">8+</h3><p>Years Exp.</p></div>
+                    <div><h3 style="color: var(--primary); font-size: 2rem;">150+</h3><p>Projects</p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats">
+        <div class="stats-grid">
+            <div class="stat-item" data-aos="zoom-in"><span class="stat-num">10M+</span><p>Leads Generated</p></div>
+            <div class="stat-item" data-aos="zoom-in" data-aos-delay="100"><span class="stat-num">500%</span><p>Avg ROI Increase</p></div>
+            <div class="stat-item" data-aos="zoom-in" data-aos-delay="200"><span class="stat-num">24/7</span><p>Active Support</p></div>
+        </div>
+    </section>
+
+    <section class="section bg-light">
+        <div class="section-header" data-aos="fade-up">
+            <h2>Client <span>Stories</span></h2>
+            <p>See what our partners have to say.</p>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card" data-aos="fade-up" data-aos-delay="100">
+                <i class="fas fa-quote-left quote-icon"></i>
+                <div class="testimonial-text">
+                    "Manofox's SEO strategy is a game changer. We saw organic traffic double in just 4 months."
+                </div>
+                <div class="client-info"><h4>Rahul S.</h4><span>Tech Founder</span></div>
+            </div>
+            <div class="testimonial-card" data-aos="fade-up" data-aos-delay="200">
+                <i class="fas fa-quote-left quote-icon"></i>
+                <div class="testimonial-text">
+                    "The new website is sleek, fast, and our customers love it. Highly professional team."
+                </div>
+                <div class="client-info"><h4>Priya V.</h4><span>Fashion Retailer</span></div>
+            </div>
+            <div class="testimonial-card" data-aos="fade-up" data-aos-delay="300">
+                <i class="fas fa-quote-left quote-icon"></i>
+                <div class="testimonial-text">
+                    "Their PPC campaigns lowered our costs while increasing lead quality significantly."
+                </div>
+                <div class="client-info"><h4>Amit K.</h4><span>Real Estate</span></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-header" data-aos="fade-up">
+            <h2>Freqently Asked <span>Questions</span></h2>
+        </div>
+        <div class="faq-grid" data-aos="fade-up">
+            <div class="faq-item">
+                <h4>Do you work with startups?</h4>
+                <p>Yes, we have special packages tailored for startups and small businesses to help them scale.</p>
+            </div>
+            <div class="faq-item">
+                <h4>What industries do you serve?</h4>
+                <p>We work with Real Estate, E-Commerce, Healthcare, Education, Tech, and more.</p>
+            </div>
+            <div class="faq-item">
+                <h4>How long does SEO take?</h4>
+                <p>SEO is a long-term strategy. You can expect significant ranking improvements within 3-6 months.</p>
+            </div>
+            <div class="faq-item">
+                <h4>Can you redesign my existing site?</h4>
+                <p>Absolutely. We can modernize your current website to improve speed, aesthetics, and conversions.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="section bg-light">
+        <div class="contact-layout">
+            <div class="contact-text" data-aos="fade-right">
+                <h3>Let's Scale Your Business</h3>
+                <p>Ready for growth? Fill out the form and our team will get back to you shortly.</p>
+                <div class="contact-details">
+                    <div><i class="fas fa-map-marker-alt"></i> Sangam Vihar, Delhi, India</div>
+                    <div><i class="fas fa-envelope"></i> info@manofox.com</div>
+                    <div><i class="fas fa-phone"></i> +91 98765 43210</div>
+                </div>
+            </div>
+            <div class="form-box" data-aos="fade-left">
+                <form action="/submit-lead" method="POST">
+                    <div class="form-group"><label>Name</label><input type="text" name="name" required></div>
+                    <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
+                    <div class="form-group"><label>Phone</label><input type="tel" name="phone"></div>
+                    <div class="form-group"><label>Message</label><textarea name="message" rows="3"></textarea></div>
+                    <button type="submit" class="btn" style="width: 100%;">Send Message</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-col" style="text-align: left;">
+                <h3 class="logo" style="margin-bottom: 20px;">Mano<span>fox</span>.</h3>
+                <p>Your trusted digital growth partner.</p>
+                <div style="margin-top: 20px;">
+                    <a href="#" style="color:white; margin-right:15px;"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" style="color:white; margin-right:15px;"><i class="fab fa-instagram"></i></a>
+                    <a href="#" style="color:white; margin-right:15px;"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            <div class="footer-col" style="text-align: left;">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#services">Services</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col" style="text-align: left;">
+                <h4>Services</h4>
+                <ul>
+                    <li>SEO Optimization</li>
+                    <li>Web Development</li>
+                    <li>Social Media</li>
+                    <li>App Development</li>
+                </ul>
+            </div>
+        </div>
+        <div class="copyright">
+            &copy; 2026 Manofox Digital. All Rights Reserved.
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, offset: 120, once: true });
+        
+        const hamburger = document.querySelector('.hamburger');
+        const navLinks = document.querySelector('.nav-links');
+
+        hamburger.addEventListener('click', () => {
+            if (navLinks.style.display === 'flex') {
+                navLinks.style.display = 'none';
+            } else {
+                navLinks.style.display = 'flex';
+                navLinks.style.flexDirection = 'column';
+                navLinks.style.position = 'absolute';
+                navLinks.style.top = '70px';
+                navLinks.style.left = '0';
+                navLinks.style.width = '100%';
+                navLinks.style.background = 'white';
+                navLinks.style.padding = '20px';
+                navLinks.style.boxShadow = '0 5px 10px rgba(0,0,0,0.1)';
+                navLinks.style.textAlign = 'center';
+            }
+        });
+    </script>
+</body>
+</html>

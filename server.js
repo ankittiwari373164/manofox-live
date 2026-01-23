@@ -51,22 +51,23 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- 5. 7-HOUR AUTO-SEO ROBOT (KEYWORDS + DESCRIPTION) ---
+// --- 5. 7-HOUR AUTO-SEO ROBOT (HYBRID: AGENCY + NEWS) ---
 async function updateKeywords() {
-    // 1. Fixed Agency Data
+    // 1. "Money Keywords" (These stay PERMANENTLY for your Agency business)
     const fixedKeywords = "Digital Marketing Agency, Best SEO Company, PPC Services, Social Media Management, Web Design Agency, Online Marketing India, Lead Generation Services";
-    const baseDescription = "Manofox is a leading Digital Marketing Agency in India offering expert SEO, PPC, and Web Design services.";
 
+    // Helper to clean up news titles
     const extractTitles = (xmlText) => {
         const matches = xmlText.match(/<title>(.*?)<\/title>/g);
         if (!matches || matches.length <= 1) return [];
+        // Get top 10 news items and clean them
         return matches.slice(1, 10).map(item => item.replace(/<\/?title>/g, '').replace(' - Google News', ''));
     };
 
     try {
-        console.log("🤖 Robot: Fetching News for Keywords & Description...");
+        console.log("🤖 Robot: Fetching latest Marketing News...");
 
-        // 2. Fetch Live News
+        // 2. Fetch "Digital Marketing" News via Proxy
         const topicUrl = 'https://news.google.com/rss/search?q=Digital+Marketing+Trends+OR+SEO+Updates&hl=en-IN&gl=IN&ceid=IN:en';
         const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(topicUrl);
         
@@ -77,41 +78,18 @@ async function updateKeywords() {
 
         if (newsKeywords.length === 0) throw new Error("No news found");
 
-        // 3. GENERATE SMART CONTENT
-        
-        // A. Merge Keywords
+        // 3. COMBINE THEM (The Magic Step)
+        // Result: "Digital Marketing Agency, PPC Services ... + [Live News Headline 1], [Live News Headline 2]"
         const finalKeys = fixedKeywords + ", " + newsKeywords.join(', ');
 
-        // B. Generate Dynamic Description
-        // Logic: "Base Pitch + Latest Trend + Call to Action"
-        const topTrend = newsKeywords[0]; // The #1 hottest news topic right now
-        // Keep it under 160 characters for Google
-        const finalDesc = `${baseDescription} Trending now: ${topTrend}. Contact us to stay ahead.`;
-
-        // 4. SAVE BOTH TO DATABASE
-        await Seo.findOneAndUpdate(
-            { pageName: 'home' }, 
-            { 
-                keywords: finalKeys,
-                description: finalDesc 
-            }, 
-            { upsert: true }
-        );
-
-        console.log("✅ SUCCESS: Updated Keywords AND Description");
-        console.log("📝 New Desc:", finalDesc);
+        // Save to Database
+        await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: finalKeys }, { upsert: true });
+        console.log("✅ SUCCESS: Merged Fixed Agency Keys + Live News");
 
     } catch (e) {
         console.log("⚠️ Robot Error:", e.message);
-        // Fallback: Use fixed keywords and a standard description
-        await Seo.findOneAndUpdate(
-            { pageName: 'home' }, 
-            { 
-                keywords: fixedKeywords,
-                description: baseDescription + " Grow your online presence with us today."
-            }, 
-            { upsert: true }
-        );
+        // If news fails, at least save the fixed agency keywords
+        await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: fixedKeywords }, { upsert: true });
     }
 }
 

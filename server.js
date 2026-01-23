@@ -21,7 +21,7 @@ app.use(session({
 }));
 
 // --- 2. DATABASE ---
-const dbURI = 'mongodb+srv://Manofox_2023:9310625182aA@@manofox.bxfg3qr.mongodb.net/?appName=Manofox'; 
+const dbURI = 'mongodb+srv://Manofox_2023:9310625182aA%40@manofox.bxfg3qr.mongodb.net/?appName=Manofox'; 
 mongoose.connect(dbURI)
     .then(() => console.log("✅ Database Connected"))
     .catch(err => console.log("❌ DB Error:", err));
@@ -166,3 +166,4 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+

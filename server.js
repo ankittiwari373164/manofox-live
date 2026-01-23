@@ -93,8 +93,23 @@ async function updateKeywords() {
     }
 }
 
-// CRON JOB: Runs every 7 hours (0 */7 * * *)
-cron.schedule('0 */7 * * *', updateKeywords);
+// --- 6. AUTOMATION LOOP ---
+
+// 1. Run the Robot immediately when the site starts
+updateKeywords();
+
+// 2. Set the 7-Hour Timer (7 hours * 60 mins * 60 secs * 1000 ms)
+const SEVEN_HOURS = 7 * 60 * 60 * 1000;
+setInterval(() => {
+    console.log("⏰ 7 Hours passed. Running Auto-Update...");
+    updateKeywords();
+}, SEVEN_HOURS);
+
+// 3. START THE SERVER
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 Manofox Server Running on Port ${PORT}`);
+});
 
 // --- 6. ROUTES ---
 function requireLogin(req, res, next) {
@@ -184,6 +199,7 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+
 
 
 

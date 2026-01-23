@@ -51,40 +51,36 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- 5. 7-HOUR AUTO-SEO ROBOT (ROBUST RSS METHOD) ---
+// --- 5. 7-HOUR AUTO-SEO ROBOT (JSON API METHOD) ---
 async function updateKeywords() {
     try {
-        console.log("🤖 Robot: Fetching trends...");
+        console.log("🤖 Robot: Fetching trends via RSS-to-JSON...");
 
-        // 1. Use a CORS Proxy to bypass Google's strict blocking
-        // This requests the India trends feed through a neutral proxy
-        const rssUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN');
+        // 1. Use RSS2JSON API (Converts Google's messy XML to clean JSON)
+        // This is much more stable than raw proxies
+        const response = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN');
         
-        const response = await fetch(rssUrl);
-        const data = await response.json(); // The proxy returns JSON
-        const text = data.contents; // The actual RSS XML is inside .contents
+        const data = await response.json();
 
-        // 2. Extract Keywords manually (Reliable Regex)
-        const matches = text.match(/<title>(.*?)<\/title>/g);
+        // 2. Safety Check
+        if (!data || !data.items || data.items.length === 0) {
+            throw new Error("API returned no items");
+        }
 
-        if (!matches || matches.length <= 1) throw new Error("No keywords found");
-
-        // 3. Clean and Format
-        // Skip the first title (it's the feed name)
-        let cleanWords = matches.slice(1, 12).map(item => {
-            return item.replace(/<\/?title>/g, ''); 
-        });
-
-        const finalKeys = cleanWords.join(', ');
+        // 3. Extract Titles (The API gives us a nice 'items' array)
+        const trendList = data.items.map(item => item.title);
+        
+        // Take the top 15 trends
+        const finalKeys = trendList.slice(0, 15).join(', ');
 
         // 4. Save to Database
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: finalKeys }, { upsert: true });
-        console.log("✅ SUCCESS: Updated with LIVE Data via Proxy");
+        console.log("✅ SUCCESS: Updated with LIVE Google Data");
         console.log("Live Keywords:", finalKeys);
 
     } catch (e) {
         console.log("⚠️ Robot Error:", e.message);
-        // Only use backup if EVERYTHING fails
+        // Fallback if the API is down
         const backupKeywords = "Digital Marketing, SEO Services, Web Development, PPC Agency, Social Media Marketing, Content Strategy, Delhi Agency, Online Growth";
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: backupKeywords }, { upsert: true });
     }
@@ -181,6 +177,7 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+
 
 
 

@@ -105,12 +105,6 @@ setInterval(() => {
     updateKeywords();
 }, SEVEN_HOURS);
 
-// 3. START THE SERVER
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 Manofox Server Running on Port ${PORT}`);
-});
-
 // --- 6. ROUTES ---
 function requireLogin(req, res, next) {
     req.session.isAdmin ? next() : res.redirect('/login');
@@ -199,6 +193,7 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+
 
 
 

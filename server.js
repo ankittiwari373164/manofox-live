@@ -110,6 +110,27 @@ function requireLogin(req, res, next) {
     req.session.isAdmin ? next() : res.redirect('/login');
 }
 
+
+// --- AUTO-GENERATED SITEMAP ---
+app.get('/sitemap.xml', (req, res) => {
+    res.header('Content-Type', 'application/xml');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        <url>
+            <loc>https://manofox.in/</loc>
+            <lastmod>${new Date().toISOString()}</lastmod>
+            <changefreq>daily</changefreq>
+            <priority>1.0</priority>
+        </url>
+        
+        <url>
+            <loc>https://manofox.in/admin</loc>
+            <changefreq>monthly</changefreq>
+            <priority>0.5</priority>
+        </url>
+    </urlset>`);
+});
+
 // Home Page
 app.get('/', async (req, res) => {
     let seo = await Seo.findOne({ pageName: 'home' });
@@ -193,6 +214,7 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+
 
 
 

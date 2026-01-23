@@ -51,36 +51,40 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- 5. 7-HOUR AUTO-SEO ROBOT ---
+// --- 5. 7-HOUR AUTO-SEO ROBOT (RSS FEED METHOD) ---
 async function updateKeywords() {
-    // 1. Define Backup Keywords (Fail-Safe)
-    const backupKeywords = "Digital Marketing, SEO Services, Web Development, PPC Agency, Social Media Marketing, Content Strategy, Delhi Agency, Online Growth";
-
     try {
-        console.log("🤖 Robot: Asking Google for new trends...");
-        
-        // 2. Try to fetch from Google
-        const trends = await googleTrends.relatedQueries({ keyword: 'Digital Marketing Agency', geo: 'IN' });
-        const parsed = JSON.parse(trends);
-        
-        let words = [];
-        if (parsed.default && parsed.default.rankedList) {
-            const top = parsed.default.rankedList[0].rankedKeyword || [];
-            const rising = parsed.default.rankedList[1].rankedKeyword || [];
-            rising.slice(0, 8).forEach(i => words.push(i.query)); // Get 8 rising trends
-            top.forEach(i => { if(words.length < 15) words.push(i.query); }); // Fill rest with top trends
-        }
+        console.log("🤖 Robot: Fetching Google Trends RSS Feed...");
 
-        // 3. If Google gave us empty data, throw error to use backup
-        if (words.length === 0) throw new Error("Empty data from Google");
+        // 1. Fetch the Public RSS Feed (This bypasses the API block)
+        const response = await fetch('https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN');
+        if (!response.ok) throw new Error(`Google refused connection: ${response.status}`);
+        
+        const text = await response.text();
 
-        const finalKeys = words.join(', ');
+        // 2. Extract Keywords using simple text matching (No extra libraries needed)
+        // The feed wraps keywords in <title>Keyword</title>
+        const matches = text.match(/<title>(.*?)<\/title>/g);
+
+        if (!matches || matches.length <= 1) throw new Error("No keywords found in RSS");
+
+        // 3. Clean up the tags
+        // We skip the first item (matches[0]) because it's just the feed title "Daily Search Trends"
+        let cleanWords = matches.slice(1, 16).map(item => {
+            return item.replace(/<\/?title>/g, ''); // Remove <title> and </title>
+        });
+
+        const finalKeys = cleanWords.join(', ');
+
+        // 4. Save to Database
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: finalKeys }, { upsert: true });
-        console.log("✅ SUCCESS: Updated with Real Google Trends");
+        console.log("✅ SUCCESS: Updated with LIVE Google Data");
+        console.log("Live Keywords:", finalKeys);
 
     } catch (e) {
-        // 4. IF GOOGLE BLOCKS US, USE BACKUP
-        console.log("⚠️ GOOGLE BLOCKED (429 Error). Using Backup Keywords.");
+        console.log("⚠️ Robot Error:", e.message);
+        // Only use backup if the RSS feed totally fails
+        const backupKeywords = "Digital Marketing, SEO Services, Web Development, PPC Agency, Social Media Marketing, Content Strategy, Delhi Agency, Online Growth";
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: backupKeywords }, { upsert: true });
     }
 }
@@ -176,5 +180,6 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+
 
 

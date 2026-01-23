@@ -51,37 +51,50 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- 5. 7-HOUR AUTO-SEO ROBOT (JSON API METHOD) ---
+// --- 5. 7-HOUR AUTO-SEO ROBOT (ULTIMATE HYBRID METHOD) ---
 async function updateKeywords() {
+    const backupKeywords = "Digital Marketing, SEO Services, Web Development, PPC Agency, Social Media Marketing, Content Strategy, Delhi Agency, Online Growth";
+
+    // Helper function to extract titles from raw XML text
+    const extractTitles = (xmlText) => {
+        const matches = xmlText.match(/<title>(.*?)<\/title>/g);
+        if (!matches || matches.length <= 1) return [];
+        // Skip the first title (Feed Name) and clean tags
+        return matches.slice(1, 15).map(item => item.replace(/<\/?title>/g, '').replace(' - Google News', ''));
+    };
+
     try {
-        console.log("🤖 Robot: Fetching trends via RSS-to-JSON...");
-
-        // 1. Use RSS2JSON API (Converts Google's messy XML to clean JSON)
-        // This is much more stable than raw proxies
-        const response = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN');
+        console.log("🤖 Robot: Attempting Strategy 1 (Google Trends via Proxy)...");
         
-        const data = await response.json();
+        // STRATEGY 1: Google Trends via corsproxy.io (High success rate)
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN');
+        const response1 = await fetch(proxyUrl);
+        const text1 = await response1.text();
+        
+        let keywords = extractTitles(text1);
 
-        // 2. Safety Check
-        if (!data || !data.items || data.items.length === 0) {
-            throw new Error("API returned no items");
+        // STRATEGY 2: If Trends failed, try Google News India (Almost never blocked)
+        if (keywords.length === 0) {
+            console.log("⚠️ Trends blocked. Switching to Strategy 2 (Google News India)...");
+            const newsUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://news.google.com/rss?ceid=IN:en&hl=en-IN&gl=IN');
+            const response2 = await fetch(newsUrl);
+            const text2 = await response2.text();
+            keywords = extractTitles(text2);
         }
 
-        // 3. Extract Titles (The API gives us a nice 'items' array)
-        const trendList = data.items.map(item => item.title);
-        
-        // Take the top 15 trends
-        const finalKeys = trendList.slice(0, 15).join(', ');
+        // FAIL-SAFE: If both failed, throw error
+        if (keywords.length === 0) throw new Error("All live feeds blocked");
 
-        // 4. Save to Database
+        const finalKeys = keywords.join(', ');
+
+        // Save to Database
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: finalKeys }, { upsert: true });
-        console.log("✅ SUCCESS: Updated with LIVE Google Data");
+        console.log("✅ SUCCESS: Updated with LIVE Data");
         console.log("Live Keywords:", finalKeys);
 
     } catch (e) {
-        console.log("⚠️ Robot Error:", e.message);
-        // Fallback if the API is down
-        const backupKeywords = "Digital Marketing, SEO Services, Web Development, PPC Agency, Social Media Marketing, Content Strategy, Delhi Agency, Online Growth";
+        console.log("❌ CRITICAL ERROR:", e.message);
+        console.log("⚠️ Using Backup Static Keywords");
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: backupKeywords }, { upsert: true });
     }
 }
@@ -177,6 +190,7 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+
 
 
 

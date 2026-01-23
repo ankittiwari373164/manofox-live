@@ -53,25 +53,35 @@ app.use((req, res, next) => {
 
 // --- 5. 7-HOUR AUTO-SEO ROBOT ---
 async function updateKeywords() {
+    // 1. Define Backup Keywords (Fail-Safe)
+    const backupKeywords = "Digital Marketing, SEO Services, Web Development, PPC Agency, Social Media Marketing, Content Strategy, Delhi Agency, Online Growth";
+
     try {
-        console.log("🤖 7-Hour SEO Robot: Fetching trends...");
+        console.log("🤖 Robot: Asking Google for new trends...");
+        
+        // 2. Try to fetch from Google
         const trends = await googleTrends.relatedQueries({ keyword: 'Digital Marketing Agency', geo: 'IN' });
         const parsed = JSON.parse(trends);
         
-        const top = parsed.default.rankedList[0].rankedKeyword || [];
-        const rising = parsed.default.rankedList[1].rankedKeyword || [];
-        
         let words = [];
-        // Prioritize Rising trends
-        rising.slice(0, 8).forEach(i => words.push(i.query));
-        // Fill rest with Top trends
-        top.forEach(i => { if(words.length < 15) words.push(i.query); });
+        if (parsed.default && parsed.default.rankedList) {
+            const top = parsed.default.rankedList[0].rankedKeyword || [];
+            const rising = parsed.default.rankedList[1].rankedKeyword || [];
+            rising.slice(0, 8).forEach(i => words.push(i.query)); // Get 8 rising trends
+            top.forEach(i => { if(words.length < 15) words.push(i.query); }); // Fill rest with top trends
+        }
+
+        // 3. If Google gave us empty data, throw error to use backup
+        if (words.length === 0) throw new Error("Empty data from Google");
 
         const finalKeys = words.join(', ');
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: finalKeys }, { upsert: true });
-        console.log("✅ Keywords Updated");
+        console.log("✅ SUCCESS: Updated with Real Google Trends");
+
     } catch (e) {
-        console.log("⚠️ API Limit. Using Backup Keywords.");
+        // 4. IF GOOGLE BLOCKS US, USE BACKUP
+        console.log("⚠️ GOOGLE BLOCKED (429 Error). Using Backup Keywords.");
+        await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: backupKeywords }, { upsert: true });
     }
 }
 
@@ -166,4 +176,5 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+
 

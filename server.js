@@ -51,49 +51,44 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- 5. 7-HOUR AUTO-SEO ROBOT (ULTIMATE HYBRID METHOD) ---
+// --- 5. 7-HOUR AUTO-SEO ROBOT (TARGETED DIGITAL MARKETING MODE) ---
 async function updateKeywords() {
+    // Backup is only used if Google goes completely offline
     const backupKeywords = "Digital Marketing, SEO Services, Web Development, PPC Agency, Social Media Marketing, Content Strategy, Delhi Agency, Online Growth";
 
-    // Helper function to extract titles from raw XML text
     const extractTitles = (xmlText) => {
         const matches = xmlText.match(/<title>(.*?)<\/title>/g);
         if (!matches || matches.length <= 1) return [];
-        // Skip the first title (Feed Name) and clean tags
         return matches.slice(1, 15).map(item => item.replace(/<\/?title>/g, '').replace(' - Google News', ''));
     };
 
     try {
-        console.log("🤖 Robot: Attempting Strategy 1 (Google Trends via Proxy)...");
-        
-        // STRATEGY 1: Google Trends via corsproxy.io (High success rate)
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://trends.google.com/trends/trendingsearches/daily/rss?geo=IN');
-        const response1 = await fetch(proxyUrl);
-        const text1 = await response1.text();
-        
-        let keywords = extractTitles(text1);
+        console.log("🤖 Robot: Fetching 'Digital Marketing' specific news...");
 
-        // STRATEGY 2: If Trends failed, try Google News India (Almost never blocked)
-        if (keywords.length === 0) {
-            console.log("⚠️ Trends blocked. Switching to Strategy 2 (Google News India)...");
-            const newsUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://news.google.com/rss?ceid=IN:en&hl=en-IN&gl=IN');
-            const response2 = await fetch(newsUrl);
-            const text2 = await response2.text();
-            keywords = extractTitles(text2);
-        }
+        // WE CHANGED THIS URL:
+        // Instead of "Top Stories", we now search specifically for "Digital Marketing OR SEO OR AI"
+        // This forces Google to give us only relevant industry news.
+        const topicUrl = 'https://news.google.com/rss/search?q=Digital+Marketing+OR+SEO+OR+Artificial+Intelligence+Marketing&hl=en-IN&gl=IN&ceid=IN:en';
+        
+        // Use the proxy to bypass blocks
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(topicUrl);
+        
+        const response = await fetch(proxyUrl);
+        const text = await response.text();
+        
+        const keywords = extractTitles(text);
 
-        // FAIL-SAFE: If both failed, throw error
-        if (keywords.length === 0) throw new Error("All live feeds blocked");
+        if (keywords.length === 0) throw new Error("No relevant keywords found");
 
         const finalKeys = keywords.join(', ');
 
         // Save to Database
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: finalKeys }, { upsert: true });
-        console.log("✅ SUCCESS: Updated with LIVE Data");
+        console.log("✅ SUCCESS: Updated with TARGETED Marketing Data");
         console.log("Live Keywords:", finalKeys);
 
     } catch (e) {
-        console.log("❌ CRITICAL ERROR:", e.message);
+        console.log("❌ ERROR:", e.message);
         console.log("⚠️ Using Backup Static Keywords");
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: backupKeywords }, { upsert: true });
     }
@@ -190,6 +185,7 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+
 
 
 

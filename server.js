@@ -43,13 +43,33 @@ const LeadSchema = new mongoose.Schema({
 });
 const Lead = mongoose.model('Lead', LeadSchema);
 
-// --- 4. TRAFFIC TRACKER ---
+// --- 4. TRAFFIC TRACKER (SMART BOT FILTER) ---
 app.use((req, res, next) => {
-    if (!req.path.includes('.') && !req.path.startsWith('/admin') && !req.path.startsWith('/login')) {
-        const isMobile = /mobile/i.test(req.get('User-Agent') || "");
-        // [UPDATED] capturing the Referrer
-        const referrer = req.get('Referrer') || 'Direct / Unknown';
-        Visit.create({ page: 'home', ip: req.ip, device: isMobile ? 'Mobile' : 'Desktop', referrer: referrer });
+    // 1. Define paths to ignore (Files, Admin, Login)
+    const isStaticFile = req.path.includes('.');
+    const isAdmin = req.path.startsWith('/admin') || req.path.startsWith('/login');
+
+    if (!isStaticFile && !isAdmin) {
+        const userAgent = req.get('User-Agent') || "";
+
+        // 2. IDENTIFY BOTS (The Important Part)
+        // This checks if the visitor is UptimeRobot, Googlebot, or other crawlers
+        const isBot = /UptimeRobot|bot|crawl|spider|slurp|google/i.test(userAgent);
+
+        // 3. ONLY COUNT IF IT IS NOT A BOT
+        if (!isBot) {
+            const isMobile = /mobile/i.test(userAgent);
+            // Clean up the referrer to look nicer
+            let referrer = req.get('Referrer') || 'Direct Traffic';
+            if (referrer.includes('manofox')) referrer = 'Internal / Direct';
+
+            Visit.create({ 
+                page: 'home', 
+                ip: req.ip, 
+                device: isMobile ? 'Mobile' : 'Desktop', 
+                referrer: referrer 
+            });
+        }
     }
     next();
 });
@@ -202,3 +222,4 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+

@@ -5,24 +5,29 @@
     <title>Manofox Admin</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --bg: #1a1a2e; --card: #16213e; --text: #fff; --accent: #e94560; }
+        :root { --bg: #1a1a2e; --card: #16213e; --text: #fff; --accent: #e94560; --green: #2ecc71; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 30px; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .date-select { padding: 10px; background: #0f3460; color: white; border: 1px solid #333; border-radius: 6px; cursor: pointer; }
         
         .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; margin-bottom: 25px; }
-        .col-3 { grid-column: span 3; } .col-9 { grid-column: span 9; } .col-12 { grid-column: span 12; }
+        .col-3 { grid-column: span 3; } .col-6 { grid-column: span 6; } .col-9 { grid-column: span 9; } .col-12 { grid-column: span 12; }
 
         .card { background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .card h2 { margin: 0 0 10px 0; color: #a0a0a0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
         .big-num { font-size: 2.2rem; font-weight: bold; color: var(--text); }
-        .sub-text { font-size: 0.9rem; color: #2ecc71; margin-top: 5px; } /* Green trend text */
+        .sub-text { font-size: 0.9rem; color: var(--green); margin-top: 5px; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { text-align: left; padding: 15px; border-bottom: 1px solid #333; }
-        th { color: #888; font-weight: normal; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #333; }
+        th { color: #888; font-weight: normal; background: #0f2444; }
+        tr:hover { background: #1f2e50; }
         
+        .tag { padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .tag-mobile { background: #e67e22; color: white; }
+        .tag-desktop { background: #3498db; color: white; }
+
         input, textarea { width: 100%; padding: 12px; background: #0f3460; border: 1px solid #222; color: white; margin-bottom: 15px; border-radius: 6px; box-sizing: border-box;}
         button { background: var(--accent); color: white; border: none; padding: 12px 25px; cursor: pointer; border-radius: 6px; font-weight: bold; transition: 0.3s; }
         button:hover { background: #d63d56; }
@@ -78,11 +83,90 @@
     </div>
 
     <div class="grid">
+        <div class="card col-6">
+            <h2>📩 Client Inquiries (Emails Received)</h2>
+            <% if (leads.length === 0) { %>
+                <p style="color:#666; font-style:italic; margin-top:20px;">No messages yet.</p>
+            <% } else { %>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Name / Phone</th>
+                                <th>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% leads.forEach(function(lead) { %>
+                                <tr>
+                                    <td style="white-space:nowrap; font-size:0.8rem; color:#888;">
+                                        <%= lead.date.toLocaleDateString() %>
+                                    </td>
+                                    <td>
+                                        <strong><%= lead.name %></strong><br>
+                                        <span style="color: #e94560; font-size: 0.8rem;"><%= lead.email %></span><br>
+                                        <span style="font-size:0.8rem; color:#888;"><%= lead.phone %></span>
+                                    </td>
+                                    <td style="font-size:0.85rem;"><%= lead.message %></td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="card col-6">
+            <h2>👀 Live Visitor Log & Sources</h2>
+            <p style="font-size:0.8rem; color:#888; margin-bottom:15px;">
+                Shows where users came from (Referrer) and what keywords they might have used.
+            </p>
+            <% if (recentVisits.length === 0) { %>
+                <p style="color:#666; font-style:italic;">No visits recorded yet.</p>
+            <% } else { %>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Device</th>
+                                <th>Traffic Source / Referrer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% recentVisits.forEach(function(visit) { %>
+                                <tr>
+                                    <td style="font-size:0.8rem; color:#888;">
+                                        <%= visit.date.toLocaleTimeString() %>
+                                    </td>
+                                    <td>
+                                        <span class="tag <%= visit.device === 'Mobile' ? 'tag-mobile' : 'tag-desktop' %>">
+                                            <%= visit.device %>
+                                        </span>
+                                    </td>
+                                    <td style="font-size:0.85rem;">
+                                        <% if (visit.referrer && visit.referrer !== 'Direct / Unknown') { %>
+                                            <span style="color: #2ecc71;">🔗 <%= visit.referrer.substring(0, 30) %>...</span>
+                                        <% } else { %>
+                                            <span style="color: #666;">Direct Entry</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <div class="grid">
         <div class="card col-12">
             <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
                 <div>
-                    <h2>🚀 Smart SEO Manager</h2>
-                    <span style="font-size: 0.8rem; color: #888;">Keywords refresh automatically every 7 hours</span>
+                    <h2>🚀 Smart SEO Manager (Visibility Strategy)</h2>
+                    <span style="font-size: 0.8rem; color: #888;">These are the Keywords your page is currently visible for (Auto-Generated)</span>
                 </div>
                 <a href="/admin/force-update" style="background: var(--accent); color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">⚡ Force Update</a>
             </div>
@@ -94,8 +178,8 @@
                         <input type="text" name="title" value="<%= seo ? seo.title : '' %>">
                     </div>
                     <div class="col-9">
-                        <label style="color:#888; font-size:0.9rem;">Meta Keywords (Auto-Generated)</label>
-                        <input type="text" name="keywords" value="<%= seo ? seo.keywords : '' %>" readonly style="opacity: 0.7; cursor: not-allowed;">
+                        <label style="color:#888; font-size:0.9rem;">Targeted Keywords (Search Terms)</label>
+                        <input type="text" name="keywords" value="<%= seo ? seo.keywords : '' %>" readonly style="opacity: 0.7; cursor: not-allowed; color: #2ecc71;">
                     </div>
                 </div>
                 <label style="color:#888; font-size:0.9rem;">Meta Description</label>

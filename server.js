@@ -27,8 +27,9 @@ mongoose.connect(dbURI)
     .catch(err => console.log("❌ DB Error:", err));
 
 // --- 3. MODELS ---
+// [UPDATED] Added 'referrer' to track where users came from
 const VisitSchema = new mongoose.Schema({
-    page: String, ip: String, device: String, date: { type: Date, default: Date.now }
+    page: String, ip: String, device: String, referrer: String, date: { type: Date, default: Date.now }
 });
 const Visit = mongoose.model('Visit', VisitSchema);
 
@@ -46,28 +47,25 @@ const Lead = mongoose.model('Lead', LeadSchema);
 app.use((req, res, next) => {
     if (!req.path.includes('.') && !req.path.startsWith('/admin') && !req.path.startsWith('/login')) {
         const isMobile = /mobile/i.test(req.get('User-Agent') || "");
-        Visit.create({ page: 'home', ip: req.ip, device: isMobile ? 'Mobile' : 'Desktop' });
+        // [UPDATED] capturing the Referrer
+        const referrer = req.get('Referrer') || 'Direct / Unknown';
+        Visit.create({ page: 'home', ip: req.ip, device: isMobile ? 'Mobile' : 'Desktop', referrer: referrer });
     }
     next();
 });
 
 // --- 5. 7-HOUR AUTO-SEO ROBOT (HYBRID: AGENCY + NEWS) ---
 async function updateKeywords() {
-    // 1. "Money Keywords" (These stay PERMANENTLY for your Agency business)
     const fixedKeywords = "Digital Marketing Agency, Best SEO Company, PPC Services, Social Media Management, Web Design Agency, Online Marketing India, Lead Generation Services";
 
-    // Helper to clean up news titles
     const extractTitles = (xmlText) => {
         const matches = xmlText.match(/<title>(.*?)<\/title>/g);
         if (!matches || matches.length <= 1) return [];
-        // Get top 10 news items and clean them
         return matches.slice(1, 10).map(item => item.replace(/<\/?title>/g, '').replace(' - Google News', ''));
     };
 
     try {
         console.log("🤖 Robot: Fetching latest Marketing News...");
-
-        // 2. Fetch "Digital Marketing" News via Proxy
         const topicUrl = 'https://news.google.com/rss/search?q=Digital+Marketing+Trends+OR+SEO+Updates&hl=en-IN&gl=IN&ceid=IN:en';
         const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(topicUrl);
         
@@ -78,27 +76,20 @@ async function updateKeywords() {
 
         if (newsKeywords.length === 0) throw new Error("No news found");
 
-        // 3. COMBINE THEM (The Magic Step)
-        // Result: "Digital Marketing Agency, PPC Services ... + [Live News Headline 1], [Live News Headline 2]"
         const finalKeys = fixedKeywords + ", " + newsKeywords.join(', ');
 
-        // Save to Database
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: finalKeys }, { upsert: true });
         console.log("✅ SUCCESS: Merged Fixed Agency Keys + Live News");
 
     } catch (e) {
         console.log("⚠️ Robot Error:", e.message);
-        // If news fails, at least save the fixed agency keywords
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: fixedKeywords }, { upsert: true });
     }
 }
 
 // --- 6. AUTOMATION LOOP ---
-
-// 1. Run the Robot immediately when the site starts
 updateKeywords();
 
-// 2. Set the 7-Hour Timer (7 hours * 60 mins * 60 secs * 1000 ms)
 const SEVEN_HOURS = 7 * 60 * 60 * 1000;
 setInterval(() => {
     console.log("⏰ 7 Hours passed. Running Auto-Update...");
@@ -110,13 +101,11 @@ function requireLogin(req, res, next) {
     req.session.isAdmin ? next() : res.redirect('/login');
 }
 
-// --- ROBOTS.TXT (Helps Google find the sitemap) ---
 app.get('/robots.txt', (req, res) => {
     res.type('text/plain');
     res.send("User-agent: *\nAllow: /\nSitemap: https://manofox.in/sitemap.xml");
 });
 
-// --- AUTO-GENERATED SITEMAP ---
 app.get('/sitemap.xml', (req, res) => {
     res.header('Content-Type', 'application/xml');
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
@@ -127,7 +116,6 @@ app.get('/sitemap.xml', (req, res) => {
             <changefreq>daily</changefreq>
             <priority>1.0</priority>
         </url>
-        
         <url>
             <loc>https://manofox.in/admin</loc>
             <changefreq>monthly</changefreq>
@@ -136,14 +124,12 @@ app.get('/sitemap.xml', (req, res) => {
     </urlset>`);
 });
 
-// Home Page
 app.get('/', async (req, res) => {
     let seo = await Seo.findOne({ pageName: 'home' });
     if (!seo) seo = { title: "Manofox | Digital Marketing", desc: "Best Agency in Delhi", keywords: "marketing, seo" };
     res.render('index', { seo });
 });
 
-// Contact Form
 app.post('/submit-lead', async (req, res) => {
     try {
         await Lead.create(req.body);
@@ -154,16 +140,13 @@ app.post('/submit-lead', async (req, res) => {
 // --- ADMIN DASHBOARD ---
 app.get('/admin', requireLogin, async (req, res) => {
     try {
-        // 1. Get Date Filter (7, 14, 21, 30)
         const days = parseInt(req.query.days) || 7;
         const startDate = new Date(); 
         startDate.setDate(startDate.getDate() - days);
 
-        // 2. Filtered Stats
         const totalViews = await Visit.countDocuments({ date: { $gte: startDate } });
         const totalLeads = await Lead.countDocuments({ date: { $gte: startDate } });
 
-        // 3. Graph Data (Filtered by Date)
         const dailyStats = await Visit.aggregate([
             { $match: { date: { $gte: startDate } } },
             { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }, count: { $sum: 1 } } },
@@ -175,37 +158,37 @@ app.get('/admin', requireLogin, async (req, res) => {
             { $group: { _id: "$device", count: { $sum: 1 } } }
         ]);
         
-        const leads = await Lead.find().sort({ date: -1 }).limit(10);
+        // [UPDATED] Fetching the actual Lead Messages
+        const leads = await Lead.find().sort({ date: -1 }).limit(15);
+        
+        // [UPDATED] Fetching Recent Visits Log (IPs + Referrers)
+        const recentVisits = await Visit.find().sort({ date: -1 }).limit(20);
+        
         const seo = await Seo.findOne({ pageName: 'home' });
 
-        // 4. Simulated Metrics (Since we don't have exit tracking)
-        // Bounce Rate: Random between 35% - 45%
         const bounceRate = totalViews > 0 ? Math.floor(Math.random() * (45 - 35 + 1) + 35) : 0;
-        // Avg Time: Random between 1m 20s and 2m 00s
         const avgTime = totalViews > 0 ? `1m ${Math.floor(Math.random() * 40 + 20)}s` : "0m 00s";
 
         res.render('admin', { 
             totalViews, totalLeads, leads, dailyStats, deviceStats, seo, 
-            bounceRate, avgTime, selectedDays: days 
+            bounceRate, avgTime, selectedDays: days,
+            recentVisits // Passing this new data to the view
         });
 
     } catch (err) { res.send(err.message); }
 });
 
-// SEO Manual Update
 app.post('/admin/seo', requireLogin, async (req, res) => {
     const { title, desc, keywords } = req.body;
     await Seo.findOneAndUpdate({ pageName: 'home' }, { title, desc, keywords }, { upsert: true });
     res.redirect('/admin');
 });
 
-// Force Update
 app.get('/admin/force-update', requireLogin, async (req, res) => {
     await updateKeywords();
     res.redirect('/admin');
 });
 
-// Auth
 app.get('/login', (req, res) => res.render('login', { error: null }));
 app.post('/login', (req, res) => {
     if (req.body.password === "foxadmin") {
@@ -219,16 +202,3 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
-
-
-
-
-
-
-
-
-
-
-
-
-

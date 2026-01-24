@@ -161,6 +161,41 @@
         </div>
     </div>
 
+
+<div class="card col-12" style="margin-top: 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h2>🔍 Top Google Search Queries (Last 30 Days)</h2>
+        <span style="background:white; color:#333; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:bold;">OFFICIAL GOOGLE DATA</span>
+    </div>
+
+    <% if (!googleSearchData || googleSearchData.length === 0) { %>
+        <p style="color:#666; font-style:italic;">No search data available yet. (Google takes 48-72 hours to start showing data for new sites)</p>
+    <% } else { %>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Search Query</th>
+                        <th>Clicks</th>
+                        <th>Impressions</th>
+                        <th>Avg. Position</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% googleSearchData.forEach(function(row) { %>
+                        <tr>
+                            <td><strong><%= row.keys[0] %></strong></td>
+                            <td style="color: #2ecc71; font-weight:bold;"><%= row.clicks %></td>
+                            <td><%= row.impressions %></td>
+                            <td>#<%= row.position.toFixed(1) %></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    <% } %>
+</div>
+
     <div class="grid">
         <div class="card col-12">
             <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
@@ -224,3 +259,4 @@
     </script>
 </body>
 </html>
+

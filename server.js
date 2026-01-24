@@ -31,7 +31,7 @@ async function getSearchData() {
         
         // Fetch data for the last 30 days
         const res = await searchConsole.searchanalytics.query({
-            siteUrl: 'https://manofox.in', // Must match GSC exactly
+            siteUrl: 'sc-domain:manofox.in', // Must match GSC exactly
             requestBody: {
                 startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
                 endDate: new Date().toISOString().split('T')[0],
@@ -244,5 +244,6 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+
 
 

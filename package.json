@@ -18,5 +18,6 @@
     "google-trends-api": "^4.9.2",
     "mongoose": "^9.1.5",
     "node-cron": "^4.2.1"
+    "googleapis": "^140.0.0"
   }
 }

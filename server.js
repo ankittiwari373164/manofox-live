@@ -4,13 +4,18 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const path = require('path');
 const cron = require('node-cron');
-const { google } = require('googleapis'); // Google Library
-
 const app = express();
+const { google } = require('googleapis');
+
+// --- SAFETY CHECK ---
+if (!process.env.GOOGLE_KEY) {
+    console.error("❌ CRITICAL ERROR: GOOGLE_KEY is missing from Render Environment Variables!");
+    console.error("👉 Go to Render Dashboard > Environment and add GOOGLE_KEY.");
+    process.exit(1); // Stop the server safely
+}
 
 // Load Key from Render's Secure Vault
-// If running locally, you might need a fallback, but for Render this is perfect.
-const key = JSON.parse(process.env.GOOGLE_KEY);
+const key = JSON.parse(process.env.GOOGLE_KEY); 
 
 const jwtClient = new google.auth.JWT(
     key.client_email,
@@ -239,4 +244,5 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+
 

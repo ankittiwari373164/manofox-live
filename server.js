@@ -8,9 +8,9 @@ const { google } = require('googleapis'); // Google Library
 
 const app = express();
 
-// --- 0. GOOGLE SEARCH CONSOLE SETUP ---
-// Load the key you uploaded to GitHub
-const key = require('./service_account.json'); 
+// Load Key from Render's Secure Vault
+// If running locally, you might need a fallback, but for Render this is perfect.
+const key = JSON.parse(process.env.GOOGLE_KEY);
 
 const jwtClient = new google.auth.JWT(
     key.client_email,
@@ -239,3 +239,4 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+

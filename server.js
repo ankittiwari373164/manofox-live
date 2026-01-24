@@ -8,6 +8,42 @@ const cron = require('node-cron');
 
 const app = express();
 
+// [ADD AT THE TOP]
+const { google } = require('googleapis');
+const key = require('./service_account.json'); // Load the key
+
+// --- GOOGLE SEARCH CONSOLE CLIENT ---
+const jwtClient = new google.auth.JWT(
+    key.client_email,
+    null,
+    key.private_key,
+    ['https://www.googleapis.com/auth/webmasters.readonly']
+);
+
+// --- FUNCTION TO FETCH GSC DATA ---
+async function getSearchData() {
+    try {
+        await jwtClient.authorize();
+        const searchConsole = google.searchconsole({ version: 'v1', auth: jwtClient });
+        
+        // Fetch data for the last 30 days
+        const res = await searchConsole.searchanalytics.query({
+            siteUrl: 'https://manofox.in', // MAKE SURE THIS MATCHES GSC EXACTLY
+            requestBody: {
+                startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+                endDate: new Date().toISOString().split('T')[0],
+                dimensions: ['query'],
+                rowLimit: 5 // Get top 5 keywords
+            }
+        });
+
+        return res.data.rows || []; // Returns array of keywords
+    } catch (error) {
+        console.log("GSC API Error:", error.message);
+        return []; // Return empty if error
+    }
+}
+
 // --- 1. CONFIGURATION ---
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
@@ -222,4 +258,5 @@ app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login')
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 Manofox Server Running on Port ${PORT}`));
+
 

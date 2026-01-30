@@ -107,36 +107,47 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- 5. 7-HOUR AUTO-SEO ROBOT ---
+// --- 5. 7-HOUR AUTO-SEO ROBOT (DIRECT CONNECTION) ---
 async function updateKeywords() {
     const fixedKeywords = "Digital Marketing Agency, Best SEO Company, PPC Services, Social Media Management, Web Design Agency, Online Marketing India, Lead Generation Services";
 
     const extractTitles = (xmlText) => {
         const matches = xmlText.match(/<title>(.*?)<\/title>/g);
         if (!matches || matches.length <= 1) return [];
+        // Clean up titles
         return matches.slice(1, 10).map(item => item.replace(/<\/?title>/g, '').replace(' - Google News', ''));
     };
 
     try {
         console.log("🤖 Robot: Fetching latest Marketing News...");
-        const topicUrl = 'https://news.google.com/rss/search?q=Digital+Marketing+Trends+OR+SEO+Updates&hl=en-IN&gl=IN&ceid=IN:en';
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(topicUrl);
         
-        const response = await fetch(proxyUrl);
+        // 1. USE DIRECT URL (No Proxy needed for Node.js)
+        const topicUrl = 'https://news.google.com/rss/search?q=Digital+Marketing+Trends+OR+SEO+Updates&hl=en-IN&gl=IN&ceid=IN:en';
+        
+        // 2. Add a "User-Agent" so Google thinks we are a real browser
+        const response = await fetch(topicUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
+        
         const text = await response.text();
         const newsKeywords = extractTitles(text);
 
         if (newsKeywords.length === 0) throw new Error("No news found");
 
         const finalKeys = fixedKeywords + ", " + newsKeywords.join(', ');
+
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: finalKeys }, { upsert: true });
         console.log("✅ SUCCESS: Merged Fixed Agency Keys + Live News");
 
     } catch (e) {
-        console.log("⚠️ Robot Error:", e.message);
+        console.log("⚠️ Robot Warning:", e.message);
+        // Fallback: Just use the Agency Keywords if news fails
         await Seo.findOneAndUpdate({ pageName: 'home' }, { keywords: fixedKeywords }, { upsert: true });
     }
 }
+
 
 // --- 6. AUTOMATION LOOP ---
 updateKeywords();
